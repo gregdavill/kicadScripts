@@ -21,9 +21,9 @@ Files are placed within a `plot` directory in the folder of the .kicad_pcb file
 
 # Examples #
 
-![alt-text](Example/bosonFrameGrabber-Front.png "bosonFrameGrabber Front")
+![alt-text](example/bosonFrameGrabber-Front.png "bosonFrameGrabber Front")
 
-![alt-text](Example/bosonFrameGrabber-Back.png "bosonFrameGrabber Front")
+![alt-text](example/bosonFrameGrabber-Back.png "bosonFrameGrabber Front")
 
 # Improvements
 
