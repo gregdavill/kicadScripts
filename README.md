@@ -25,6 +25,8 @@ Files are placed within a `plot` directory in the folder of the .kicad_pcb file
 * Uses Kicad python bindings to render board layers as SVG
 * Recolours SVGs
 * Stacks SVGs with user defined colour/opacity
+* Creates a drill layer
+* Mirrors the backside of the PCB.
 * Render to PNG with Inkscape CLI
 
 ### plot_gerbers.py
@@ -43,8 +45,7 @@ Files are placed within a `plot` directory in the folder of the .kicad_pcb file
 
 # Improvements
 
-- Draw drill hits properly.
-- Trim images around PCB.
-- Improve code
+- Correctly Trim images around PCB. (bounding box of PCB is too large.)
+- Generally Cleanup/Improve code
 - Plot front and back Images next to each other on the same image.
-- Remove hardcode of inkscape path.
+- Better Handling of colours (Add OSHPark colours)
