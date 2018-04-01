@@ -8,16 +8,32 @@ A collection of scripts to automate PCB rendering and exporting gerbers.
 I found PcbDraw after I started writting my own tool to do the same function. It's probably a better tool for rendering nice images of PCBs. 
 
 # Usage #
-Currently only a single script:
+## Create Pretty PNGs
 
-	python plot_board.py <PathToYourAwesomeProject.kicad_pcb>
+`python plot_board.py <PathToYourAwesomeProject.kicad_pcb>`
+
+## Create a GerberZip
+
+`python plot_gerbers.py <PathToYourAwesomeProject.kicad_pcb>`
 
 Files are placed within a `plot` directory in the folder of the .kicad_pcb file
 
 # Features #
 
-* creates all the gerber/drill files required for fab, renames and zips them up.
-* creates an SVG of the top and bottom sides of the board with nice colours and renders these to PNG with inkscape CLI.
+### plot_board.py
+
+* Uses Kicad python bindings to render board layers as SVG
+* Recolours SVGs
+* Stacks SVGs with user defined colour/opacity
+* Render to PNG with Inkscape CLI
+
+### plot_gerbers.py
+
+* creates all the gerber/drill files.
+* Renames with Protel Extensions `gtl,gts,gto,gml...`
+* Puts all files into a single zip
+* Renames Zip: `<Project><Date>_<Time>.zip` for easy tracking of versions.
+
 
 # Examples #
 
