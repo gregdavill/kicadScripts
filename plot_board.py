@@ -20,6 +20,26 @@ from pcbnew import *
 from datetime import datetime
 from shutil import copy
 
+greenStandard = {
+	'Copper' : ['#E8D959',0.85],
+	'SolderMask' : ['#1D5D17',0.80],
+	'Paste' : ['#9E9E9E',0.95],
+	'Silk' : ['#fefefe',1.00],
+	'Edge' : ['#000000',0.20],
+	'BackGround' : ['#1D5D17']
+}
+
+oshPark = {
+	'Copper' : ['#E8D959',0.85],
+	'SolderMask' : ['#3a0e97',0.83],
+	'Paste' : ['#9E9E9E',0.05],
+	'Silk' : ['#d8dae7',1.00],
+	'Edge' : ['#000000',0.20],
+	'BackGround' : ['#3a0e97']
+}
+
+colours = greenStandard
+
 def unique_prefix():
 	unique_prefix.counter += 1
 	return "pref_" + str(unique_prefix.counter)
@@ -32,34 +52,11 @@ def kiColour(val):
 	return (val & 0xFF0000 >> 24) / 255
 
 
-class BBox:
-	def __init__(self, xl=None, yl=None, xh=None, yh=None):
-		self.xl = xl
-		self.xh = xh
-		self.yl = yl
-		self.yh = yh
-
-	def __str__(self):
-		return "({},{} {},{})".format(self.xl, self.yl, self.xh, self.yh)
-		
-	def addPoint(self, pt):
-		self.xl = mymin(self.xl, pt.x)
-		self.xh = mymax(self.xh, pt.x)
-		self.yl = mymin(self.yl, pt.y)
-		self.yh = mymax(self.yh, pt.y)
-
-	def addPointBloatXY(self, pt, x, y):
-		self.xl = mymin(self.xl, pt.x-x)
-		self.xh = mymax(self.xh, pt.x+x)
-		self.yl = mymin(self.yl, pt.y-y)
-		self.yh = mymax(self.yh, pt.y+y)
-
 class svgObject(object):
 	# Open an SVG file
 	def openSVG(self, filename):
 		prefix = unique_prefix() + "_"
 		root = ET.parse(filename)
-		self.bbox = BBox()
 		
 		# We have to ensure all Ids in SVG are unique. Let's make it nasty by
 		# collecting all ids and doing search & replace
@@ -82,13 +79,6 @@ class svgObject(object):
 				el.tag = el.tag.split('}', 1)[1]
 		self.svg = root
 
-		# parse all polyline points into a BBox
-		for el in root.getiterator():
-			if el.tag == 'polyline':
-				points = el.attrib['points'];
-				# use re to parse through points
-
-				#add them to the BBox
 
 
 		
@@ -101,16 +91,32 @@ class svgObject(object):
 <defs> </defs>
 </svg>"""))
 		self.svg = self.et.getroot()
+		defs = self.svg.find('defs')
+
+		newMask = ET.SubElement(defs,'mask', id="boardMask", 
+		width="{}".format(ki2dmil(bb.GetWidth())),
+		height="{}".format(ki2dmil(bb.GetHeight())),
+		x="{}".format(ki2dmil(bb.GetX())),
+		y="{}".format(ki2dmil(bb.GetY())))
+		if bMirrorMode:
+			newMask.attrib['transform'] = "scale(-1,1)"
+		
+		rect = ET.SubElement(newMask, 'rect',  
+		width="{}".format(ki2dmil(bb.GetWidth())),
+		height="{}".format(ki2dmil(bb.GetHeight())),
+		x="{}".format(ki2dmil(bb.GetX())),
+		y="{}".format(ki2dmil(bb.GetY())),
+		style="fill:#FFFFFF; fill-opacity:1.0;")
 
 	# Wrap all image data into a group and return that group
 	def extractImageAsGroup(self):
-		wrapper = ET.Element('g')
+		wrapper = ET.Element('g', 
+		width="{}".format(ki2dmil(bb.GetWidth())),
+		height="{}".format(ki2dmil(bb.GetHeight())),
+		x="{}".format(ki2dmil(bb.GetX())),
+		y="{}".format(ki2dmil(bb.GetY())))
 		wrapper.extend(self.svg.iter('g'))
 		return wrapper
-
-#	def addAttributesToElement(self,element, attrs):
-#		for k,v in attrs.items():
-#			element.setAttribute(k,v)
 
 	def reColour(self, transform_function):
 		# Set fill and stroke on all groups
@@ -136,15 +142,16 @@ class svgObject(object):
 
 	def addSvgImage(self, svgImage):
 		imageGroup = svgImage.extractImageAsGroup()
-		self.svg.append(imageGroup)
+		imageGroup.attrib['style'] =  "mask:url(#boardMask);"
 		if bMirrorMode:
 			imageGroup.attrib['transform'] = "scale(-1,1)"
+		self.svg.append(imageGroup)
 	
 	def addholes(self, holeData):
-		defs = self.svg.find('defs')
-		self.svg.append(holeData)
+		holeData.attrib['style'] =  "mask:url(#boardMask);"
 		if bMirrorMode:
 			holeData.attrib['transform'] = "scale(-1,1)"
+		self.svg.append(holeData)
 
 	def addSvgImageInvert(self, svgImage, colour):
 		defs = self.svg.find('defs')
@@ -201,7 +208,7 @@ def get_hole_mask(board):
 			size = ki2dmil(pad.GetDrillSize()[0]) # Tracks will fail with Get Drill Value
 
 			stroke = size
-			length = 0.1
+			length = 1
 			points = "{} {} {} {}".format(0, -length / 2, 0, length / 2)
 			el = ET.SubElement(container, "polyline")
 			el.attrib["stroke-linecap"] = "round"
@@ -221,7 +228,7 @@ def get_hole_mask(board):
 		except:
 			continue
 		stroke = size
-		length = 0.1
+		length = 1
 		points = "{} {} {} {}".format(0, -length / 2, 0, length / 2)
 		el = ET.SubElement(container, "polyline")
 		el.attrib["stroke-linecap"] = "round"
@@ -237,8 +244,8 @@ def get_hole_mask(board):
 
 
 def plot_layer(layer_info):
-	pctl.SetLayer(layer_info[1])
-	pctl.OpenPlotfile(layer_info[0], PLOT_FORMAT_SVG, layer_info[2])
+	pctl.SetLayer(layer_info[0])
+	pctl.OpenPlotfile("", PLOT_FORMAT_SVG, "")
 	pctl.PlotLayer()
 	time.sleep(0.01)
 	pctl.ClosePlot()
@@ -255,13 +262,13 @@ def render(plot_plan, output_filename):
 		svgData = svgObject()
 		svgData.openSVG(pctl.GetPlotFileName())
 
-		if layer_info[4] == "Invert":
-			canvas.addSvgImageInvert(svgData, layer_info[5]);
+		if layer_info[1] == "Invert":
+			canvas.addSvgImageInvert(svgData, colours[layer_info[2]][0]);
 		else:
 			def colorize(original):
 				# For invert to work we need to invert default colours. 
 				if original.lower() == '#000000':
-					return layer_info[5]
+					return colours[layer_info[2]][0]
 				return original
 			svgData.reColour(colorize)
 			
@@ -277,12 +284,34 @@ def render(plot_plan, output_filename):
 	print 'Rasterizing...'
 	final_png = os.path.join(output_directory, output_filename)
 
+	# x0,y0 are bottom LEFT corner
+	dpi = 800
+
+	scale = 3.779
+	mmscale = 1000000.0
+
+	yMax = 210070000
+
+	x0 = (bb.GetX() / mmscale) * scale
+	y0 = ((yMax - (bb.GetY() + bb.GetHeight())) / mmscale) * scale
+	x1 = ((bb.GetX() + bb.GetWidth()) / mmscale) * scale
+	y1 = ((yMax - (bb.GetY())) / mmscale) * scale
+
+	x0 -= 10
+	y0 -= 10
+	x1 += 10
+	y1 += 10
+
+	if bMirrorMode:
+		x0 = -x0
+		x1 = -x1
+
 	subprocess.check_call([
-		'C:\Program Files\Inkscape\inkscape',
-		'--export-area-drawing',
-		'--export-dpi=600',
+		'inkscape',
+		'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+		'--export-dpi={}'.format(dpi),
 		'--export-png', final_png,
-		'--export-background', plot_bg,
+		'--export-background', colours['BackGround'][0],
 		final_svg,
 	])
 
@@ -334,39 +363,35 @@ pctl.SetColorMode(False)
 
 # This by gerbers only (also the name is truly horrid!)
 popt.SetSubtractMaskFromSilk(False) #remove solder mask from silk to be sure there is no silk on pads
-bb = board.ComputeBoundingBox()
+
+bb = board.GetBoardEdgesBoundingBox()
 
 
 
 
 
 bMirrorMode = False
-plot_bg = '#064A00'
 # Once the defaults are set it become pretty easy...
 # I have a Turing-complete programming language here: I'll use it...
 # param 0 is a string added to the file base name to identify the drawing
 # param 1 is the layer ID
 plot_plan = [
-	( "CuTop", F_Cu, "Top layer", ".gtl", "",'#E8D959',0.85 ),
-	( "MaskTop", F_Mask, "Mask top", ".gts", "Invert" ,'#1D5D17',0.8 ),
-	( "PasteTop", F_Paste, "Paste Top", ".gtp", "" ,'#9E9E9E',0.95 ),
-	( "SilkTop", F_SilkS, "Silk Top", ".gto", "" ,'#fefefe',1.0 ),
-	( "EdgeCuts", Edge_Cuts, "Edges", ".gml", ""  ,'#000000',0.2 ),
+	( F_Cu, "",'Copper' ),
+	( F_Mask, "Invert" ,'SolderMask' ),
+	( F_Paste, "" , 'Paste' ),
+	( F_SilkS, "" ,'Silk' ),
+	( Edge_Cuts, ""  ,'Edge' ),
 ]
-#renderPNG(plot_plan, project_name + '-Front.png')
 render(plot_plan, project_name + '-Front.png')
 
 bMirrorMode = True
 plot_plan = [
-	( "CuBottom", B_Cu, "Bottom layer", ".gbl", "",'#E8D959',0.85 ),
-	( "MaskBottom", B_Mask, "Mask Bottom", ".gbs", "Invert" ,'#1D5D17',0.8 ),
-	( "PasteBottom", B_Paste, "Paste Bottom", ".gbp", "" ,'#9E9E9E',0.95 ),
-	( "SilkTop", B_SilkS, "Silk Bottom", ".gbo", "" ,'#fefefe',1.0 ),
-	( "EdgeCuts", Edge_Cuts, "Edges", ".gml", ""  ,'#000000',0.2 ),
+	( B_Cu, "",'Copper' ),
+	( B_Mask, "Invert" ,'SolderMask' ),
+	( B_Paste, "" , 'Paste' ),
+	( B_SilkS, "" ,'Silk' ),
+	( Edge_Cuts, ""  ,'Edge' ),
 ]
-#renderPNG(plot_plan, project_name + '-Back.png')
-
-
 render(plot_plan, project_name + '-Back.png')
 
 shutil.rmtree(temp_dir, ignore_errors=True)
