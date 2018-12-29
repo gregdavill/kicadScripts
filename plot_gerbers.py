@@ -27,7 +27,6 @@ import logging
 import zipfile
 import shutil
 
-from svg_processor import SvgProcessor
 
 from pcbnew import *
 from datetime import datetime
@@ -62,12 +61,12 @@ popt.SetExcludeEdgeLayer(True);
 popt.SetScale(1)
 popt.SetUseAuxOrigin(True)
 popt.SetNegative(False)
-popt.SetPlotReference(False)
-popt.SetPlotValue(False)
+popt.SetPlotReference(True)
+popt.SetPlotValue(True)
 popt.SetPlotInvisibleText(False)
 
 # This by gerbers only (also the name is truly horrid!)
-popt.SetSubtractMaskFromSilk(False) #remove solder mask from silk to be sure there is no silk on pads
+popt.SetSubtractMaskFromSilk(True) #remove solder mask from silk to be sure there is no silk on pads
 
 
 plot_plan = [
