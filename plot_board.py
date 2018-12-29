@@ -22,11 +22,12 @@ from shutil import copy
 
 greenStandard = {
 	'Copper' : ['#E8D959',0.85],
+	'CopperInner' : ['#402400',0.80],
 	'SolderMask' : ['#1D5D17',0.80],
 	'Paste' : ['#9E9E9E',0.95],
 	'Silk' : ['#fefefe',1.00],
 	'Edge' : ['#000000',0.20],
-	'BackGround' : ['#1D5D17']
+	'BackGround' : ['#998060']
 }
 
 oshPark = {
@@ -376,6 +377,7 @@ bMirrorMode = False
 # param 0 is a string added to the file base name to identify the drawing
 # param 1 is the layer ID
 plot_plan = [
+	( In1_Cu, "",'CopperInner' ),
 	( F_Cu, "",'Copper' ),
 	( F_Mask, "Invert" ,'SolderMask' ),
 	( F_Paste, "" , 'Paste' ),
@@ -386,6 +388,7 @@ render(plot_plan, project_name + '-Front.png')
 
 bMirrorMode = True
 plot_plan = [
+	( In2_Cu, "",'CopperInner' ),
 	( B_Cu, "",'Copper' ),
 	( B_Mask, "Invert" ,'SolderMask' ),
 	( B_Paste, "" , 'Paste' ),
@@ -395,4 +398,3 @@ plot_plan = [
 render(plot_plan, project_name + '-Back.png')
 
 shutil.rmtree(temp_dir, ignore_errors=True)
-# We have just generated your plotfiles with a single script
