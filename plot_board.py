@@ -114,38 +114,41 @@ class svgObject(object):
 		width="{}".format(ki2dmil(bb.GetWidth())),
 		height="{}".format(ki2dmil(bb.GetHeight())),
 		x="{}".format(ki2dmil(bb.GetX())),
-		y="{}".format(ki2dmil(bb.GetY())))
+		y="{}".format(ki2dmil(bb.GetY())),
+		style="fill:#000000; fill-opacity:1.0; stroke:#000000; stroke-opacity:1.0;")
 		wrapper.extend(self.svg.iter('g'))
 		return wrapper
 
 	def reColour(self, transform_function):
+		wrapper = self.extractImageAsGroup()
 		# Set fill and stroke on all groups
-		for group in self.svg.findall('g'):
+		for group in wrapper.iter():
 			svgObject._apply_transform(group, {
 				'fill': transform_function,
 				'stroke': transform_function,
 			})
+		self.svg = wrapper
 
 	@staticmethod
 	def _apply_transform(node, values):
-		original_style = node.attrib['style']
-		for (k,v) in values.items():
-			escaped_key = re.escape(k)
-			m = re.search(r'\b' + escaped_key + r':(?P<value>[^;]*);', original_style)
-			if m:
-				transformed_value = v(m.group('value'))
-				original_style = re.sub(
-					r'\b' + escaped_key + r':[^;]*;',
-					k + ':' + transformed_value + ';',
-					original_style)
-		node.attrib['style'] = original_style
+		try:
+			original_style = node.attrib['style']
+			for (k,v) in values.items():
+				escaped_key = re.escape(k)
+				m = re.search(r'\b' + escaped_key + r':(?P<value>[^;]*);', original_style)
+				if m:
+					transformed_value = v
+					original_style = re.sub(
+						r'\b' + escaped_key + r':[^;]*;',
+						k + ':' + transformed_value + ';',
+						original_style)
+			node.attrib['style'] = original_style
+		except Exception as e: 
+			style_string = "stroke:"+ values['fill'] +";"
+			node.attrib['style'] = style_string
+			pass
 
-	def addSvgImage(self, svgImage):
-		imageGroup = svgImage.extractImageAsGroup()
-		imageGroup.attrib['style'] =  "mask:url(#boardMask);"
-		if bMirrorMode:
-			imageGroup.attrib['transform'] = "scale(-1,1)"
-		self.svg.append(imageGroup)
+	
 	
 	def addholes(self, holeData):
 		holeData.attrib['style'] =  "mask:url(#boardMask);"
@@ -188,6 +191,25 @@ class svgObject(object):
 		if bMirrorMode:
 			wrapper.attrib['transform'] = "scale(-1,1)"
 
+	def addSvgImage(self, svgImage, colour):
+		
+		#create a rectangle to mask through
+		wrapper = ET.SubElement(self.svg, 'g',
+		style="fill:{}; fill-opacity:1.0;".format(colour))
+		
+		imageGroup = svgImage.extractImageAsGroup()
+		wrapper.append(imageGroup)
+
+		for group in wrapper.iter():
+			svgObject._apply_transform(group, {
+				'fill': colour,
+				'stroke': colour,
+			})
+		if bMirrorMode:
+			wrapper.attrib['transform'] = "scale(-1,1)"
+
+
+
 	def write(self, filename):
 		with open(filename, 'wb') as output_file:
 			self.et.write(output_file)
@@ -203,8 +225,8 @@ def get_hole_mask(board):
 	for mod in board.GetModules():
 		for pad in mod.Pads():
 			pos = pad.GetPosition()
-			pos.x = ki2dmil(pos.x)
-			pos.y = ki2dmil(pos.y)
+			pos_x = ki2dmil(pos.x)
+			pos_y = ki2dmil(pos.y)
 			size = ki2dmil(pad.GetDrillSize()[0]) # Tracks will fail with Get Drill Value
 
 			stroke = size
@@ -216,14 +238,14 @@ def get_hole_mask(board):
 			el.attrib["stroke-width"] = str(stroke)
 			el.attrib["points"] = points
 			el.attrib["transform"] = "translate({} {})".format(
-				pos.x, pos.y)	
+				pos_x, pos_y)	
 
 	# Print all Vias
 	for track in board.GetTracks():
 		try:
 			pos = track.GetPosition()
-			pos.x = ki2dmil(pos.x)
-			pos.y = ki2dmil(pos.y)
+			pos_x = ki2dmil(pos.x)
+			pos_y = ki2dmil(pos.y)
 			size = ki2dmil(track.GetDrillValue()) # Tracks will fail with Get Drill Value
 		except:
 			continue
@@ -236,7 +258,7 @@ def get_hole_mask(board):
 		el.attrib["stroke-width"] = str(stroke)
 		el.attrib["points"] = points
 		el.attrib["transform"] = "translate({} {})".format(
-			pos.x, pos.y)
+			pos_x, pos_y)
 		
 		
 
@@ -257,6 +279,7 @@ def render(plot_plan, output_filename):
 	canvas.createSVG()
 	for layer_info in plot_plan:
 
+		print(layer_info)
 		plot_layer(layer_info)
 		
 		svgData = svgObject()
@@ -265,23 +288,16 @@ def render(plot_plan, output_filename):
 		if layer_info[1] == "Invert":
 			canvas.addSvgImageInvert(svgData, colours[layer_info[2]][0]);
 		else:
-			def colorize(original):
-				# For invert to work we need to invert default colours. 
-				if original.lower() == '#000000':
-					return colours[layer_info[2]][0]
-				return original
-			svgData.reColour(colorize)
-			
-			canvas.addSvgImage(svgData)
+			canvas.addSvgImage(svgData,colours[layer_info[2]][0])
 
 	# Drills are seperate from Board layers. Need to be handled differently
 	canvas.addholes(get_hole_mask(board))
 	
-	print 'Merging layers...'
+	print('Merging layers...')
 	final_svg = os.path.join(temp_dir, project_name + '-merged.svg')
 	canvas.write(final_svg)
 
-	print 'Rasterizing...'
+	print('Rasterizing...')
 	final_png = os.path.join(output_directory, output_filename)
 
 	# x0,y0 are bottom LEFT corner
@@ -331,7 +347,7 @@ shutil.rmtree(temp_dir, ignore_errors=True)
 try:
 	os.makedirs(temp_dir)
 except:
-	print 'folder exists'
+	print('folder exists')
 
 today = datetime.now().strftime('%Y%m%d_%H%M%S')
 
@@ -367,17 +383,15 @@ popt.SetSubtractMaskFromSilk(False) #remove solder mask from silk to be sure the
 bb = board.GetBoardEdgesBoundingBox()
 
 
-
-
-
 bMirrorMode = False
 # Once the defaults are set it become pretty easy...
 # I have a Turing-complete programming language here: I'll use it...
 # param 0 is a string added to the file base name to identify the drawing
 # param 1 is the layer ID
 plot_plan = [
+	( In1_Cu, "",'Edge' ),
 	( F_Cu, "",'Copper' ),
-	( F_Mask, "Invert" ,'SolderMask' ),
+	( F_Mask, 'Invert','SolderMask' ),
 	( F_Paste, "" , 'Paste' ),
 	( F_SilkS, "" ,'Silk' ),
 	( Edge_Cuts, ""  ,'Edge' ),
@@ -386,6 +400,7 @@ render(plot_plan, project_name + '-Front.png')
 
 bMirrorMode = True
 plot_plan = [
+		( In4_Cu, "",'Edge' ),
 	( B_Cu, "",'Copper' ),
 	( B_Mask, "Invert" ,'SolderMask' ),
 	( B_Paste, "" , 'Paste' ),
