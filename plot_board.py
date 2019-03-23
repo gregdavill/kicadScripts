@@ -227,11 +227,19 @@ def get_hole_mask(board):
 			pos = pad.GetPosition()
 			pos_x = ki2dmil(pos.x)
 			pos_y = ki2dmil(pos.y)
-			size = ki2dmil(pad.GetDrillSize()[0]) # Tracks will fail with Get Drill Value
+			size = ki2dmil(min(pad.GetDrillSize())) # Tracks will fail with Get Drill Value
 
-			stroke = size
 			length = 1
+			if pad.GetDrillSize()[0] != pad.GetDrillSize()[1]:
+				length = ki2dmil(max(pad.GetDrillSize()) - min(pad.GetDrillSize()))
+
+			#length = 200
+			stroke = size
+			print(str(size) + " " +  str(length))
+			
 			points = "{} {} {} {}".format(0, -length / 2, 0, length / 2)
+			if pad.GetDrillSize()[0] >= pad.GetDrillSize()[1]:
+				points = "{} {} {} {}".format(-length / 2, 0, length / 2, 0)
 			el = ET.SubElement(container, "polyline")
 			el.attrib["stroke-linecap"] = "round"
 			el.attrib["stroke"] = "black"
@@ -239,6 +247,7 @@ def get_hole_mask(board):
 			el.attrib["points"] = points
 			el.attrib["transform"] = "translate({} {})".format(
 				pos_x, pos_y)	
+
 
 	# Print all Vias
 	for track in board.GetTracks():
@@ -400,7 +409,7 @@ render(plot_plan, project_name + '-Front.png')
 
 bMirrorMode = True
 plot_plan = [
-		( In4_Cu, "",'Edge' ),
+	( In2_Cu, "",'Edge' ),
 	( B_Cu, "",'Copper' ),
 	( B_Mask, "Invert" ,'SolderMask' ),
 	( B_Paste, "" , 'Paste' ),
