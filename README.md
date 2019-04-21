@@ -1,7 +1,7 @@
 # kicadScripts
 A collection of scripts to automate PCB rendering and exporting gerbers.
 
-### Work inspired form the folling projects:
+### Work inspired form the following projects:
 * [PcbDraw](https://github.com/yaqwsx/PcbDraw)
 * [Scott Bezek's SplitFlap](https://github.com/scottbez1/splitflap)
 
