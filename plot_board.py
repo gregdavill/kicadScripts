@@ -21,12 +21,13 @@ from datetime import datetime
 from shutil import copy
 
 greenStandard = {
-	'Copper' : ['#E8D959',0.85],
-	'SolderMask' : ['#1D5D17',0.80],
+	'Copper' : ['#dbba85',0.85],
+	'SolderMask' : ['#003f28',0.80],
+	'Inner' : ['#2a0867',0.83],
 	'Paste' : ['#9E9E9E',0.95],
-	'Silk' : ['#fefefe',1.00],
+	'Silk' : ['#eaebe5',1.00],
 	'Edge' : ['#000000',0.20],
-	'BackGround' : ['#1D5D17']
+	'BackGround' : ['#004d30']
 }
 
 oshPark = {
@@ -36,6 +37,16 @@ oshPark = {
 	'Silk' : ['#d8dae7',1.00],
 	'Edge' : ['#000000',0.20],
 	'BackGround' : ['#3a0e97']
+}
+
+# Black and white colours to be used for texture/bump mapping
+bumpMap = {
+	'Copper' : ['#666',0.85],
+	'SolderMask' : ['#777',0.80],
+	'Paste' : ['#FFF',0.95],
+	'Silk' : ['#bbb',1.00],
+	'Edge' : ['#eeeeee',0.20],
+	'BackGround' : ['#555555']
 }
 
 colours = greenStandard
@@ -151,7 +162,7 @@ class svgObject(object):
 	
 	
 	def addholes(self, holeData):
-		holeData.attrib['style'] =  "mask:url(#boardMask);"
+		holeData.attrib['mask'] =  "url(#boardMask);"
 		if bMirrorMode:
 			holeData.attrib['transform'] = "scale(-1,1)"
 		self.svg.append(holeData)
@@ -180,13 +191,15 @@ class svgObject(object):
 
 		#create a rectangle to mask through
 		wrapper = ET.SubElement(self.svg, 'g',
-		style="fill:{}; fill-opacity:0.8; mask:url(#test-a);".format(colour))
+		style="fill:{}; fill-opacity:0.75;".format(colour))
 		rect = ET.SubElement(wrapper, 'rect', 
 		width="{}".format(ki2dmil(bb.GetWidth())),
 		height="{}".format(ki2dmil(bb.GetHeight())),
 		x="{}".format(ki2dmil(bb.GetX())),
 		y="{}".format(ki2dmil(bb.GetY())))
 
+
+		wrapper.attrib['mask'] =  "url(#test-a);"
 
 		if bMirrorMode:
 			wrapper.attrib['transform'] = "scale(-1,1)"
@@ -235,11 +248,11 @@ def get_hole_mask(board):
 
 			#length = 200
 			stroke = size
-			print(str(size) + " " +  str(length))
+			print(str(size) + " " +  str(length) + " " + str(pad.GetOrientation()))
 			
 			points = "{} {} {} {}".format(0, -length / 2, 0, length / 2)
 			if pad.GetDrillSize()[0] >= pad.GetDrillSize()[1]:
-				points = "{} {} {} {}".format(-length / 2, 0, length / 2, 0)
+				points = "{} {} {} {}".format(length / 2, 0, -length / 2, 0)
 			el = ET.SubElement(container, "polyline")
 			el.attrib["stroke-linecap"] = "round"
 			el.attrib["stroke"] = "black"
@@ -247,6 +260,8 @@ def get_hole_mask(board):
 			el.attrib["points"] = points
 			el.attrib["transform"] = "translate({} {})".format(
 				pos_x, pos_y)	
+			el.attrib["transform"] += "rotate({})".format(
+				pad.GetOrientation()/10)	
 
 
 	# Print all Vias
@@ -310,7 +325,7 @@ def render(plot_plan, output_filename):
 	final_png = os.path.join(output_directory, output_filename)
 
 	# x0,y0 are bottom LEFT corner
-	dpi = 800
+	dpi = 1200
 
 	scale = 3.779
 	mmscale = 1000000.0
@@ -322,10 +337,10 @@ def render(plot_plan, output_filename):
 	x1 = ((bb.GetX() + bb.GetWidth()) / mmscale) * scale
 	y1 = ((yMax - (bb.GetY())) / mmscale) * scale
 
-	x0 -= 10
-	y0 -= 10
-	x1 += 10
-	y1 += 10
+	#x0 -= 10
+	#y0 -= 10
+	#x1 += 10
+	#y1 += 10
 
 	if bMirrorMode:
 		x0 = -x0
@@ -392,13 +407,10 @@ popt.SetSubtractMaskFromSilk(False) #remove solder mask from silk to be sure the
 bb = board.GetBoardEdgesBoundingBox()
 
 
+# Plot Various layer to generate Front View
 bMirrorMode = False
-# Once the defaults are set it become pretty easy...
-# I have a Turing-complete programming language here: I'll use it...
-# param 0 is a string added to the file base name to identify the drawing
-# param 1 is the layer ID
 plot_plan = [
-	( In1_Cu, "",'Edge' ),
+	( In1_Cu, "",'SolderMask' ),
 	( F_Cu, "",'Copper' ),
 	( F_Mask, 'Invert','SolderMask' ),
 	( F_Paste, "" , 'Paste' ),
@@ -407,9 +419,11 @@ plot_plan = [
 ]
 render(plot_plan, project_name + '-Front.png')
 
+
+# Fli layers and generate Back View
 bMirrorMode = True
 plot_plan = [
-	( In2_Cu, "",'Edge' ),
+	( In2_Cu, "",'SolderMask' ),
 	( B_Cu, "",'Copper' ),
 	( B_Mask, "Invert" ,'SolderMask' ),
 	( B_Paste, "" , 'Paste' ),
@@ -417,6 +431,17 @@ plot_plan = [
 	( Edge_Cuts, ""  ,'Edge' ),
 ]
 render(plot_plan, project_name + '-Back.png')
+
+# Experiments to render out various texture maps
+#colours = bumpMap
+#plot_plan = [
+#	( F_Cu, "",'Copper' ),
+#	( F_Mask, 'Invert','SolderMask' ),
+#	( F_Paste, "" , 'Paste' ),
+#	( F_SilkS, "" ,'Silk' ),
+#	( Edge_Cuts, ""  ,'Edge' ),
+#]
+#render(plot_plan, project_name + '-Bump.png')
 
 shutil.rmtree(temp_dir, ignore_errors=True)
 # We have just generated your plotfiles with a single script
