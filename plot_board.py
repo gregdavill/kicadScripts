@@ -261,7 +261,7 @@ def get_hole_mask(board):
 			el.attrib["transform"] = "translate({} {})".format(
 				pos_x, pos_y)	
 			el.attrib["transform"] += "rotate({})".format(
-				pad.GetOrientation()/10)	
+				-pad.GetOrientation()/10)	
 
 
 	# Print all Vias
