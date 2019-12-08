@@ -83,7 +83,7 @@ plot_plan = [
 
 popt.SetMirror(False)
 popt.SetDrillMarksType(PCB_PLOT_PARAMS.NO_DRILL_SHAPE)
-print "Plotting Gerber Layers:"
+print("Plotting Gerber Layers:")
 
 fab_files = []
 
@@ -98,7 +98,7 @@ for layer_info in plot_plan:
     srcPlot = pctl.GetPlotFileName()
     dstPlot = os.path.join(output_directory,project_name + layer_info[3])
     shutil.move(srcPlot, dstPlot)
-    print layer_info[0] + " => " + dstPlot
+    print(layer_info[0] + " => " + dstPlot)
     fab_files.append(dstPlot)
 
 
@@ -116,7 +116,7 @@ for innerlyr in range ( 1, lyrcnt-1 ):
     srcPlot = pctl.GetPlotFileName()
     dstPlot = os.path.join(output_directory,project_name + '.g' + str(innerlyr + 1))
     shutil.move(srcPlot, dstPlot)
-    print lyrname + " => " + dstPlot
+    print(lyrname + " => " + dstPlot)
     fab_files.append(dstPlot)
 
 
@@ -142,7 +142,7 @@ drlwriter.CreateDrillandMapFilesSet( output_directory, genDrl, genMap );
 srcPlot = os.path.join(output_directory,project_name + '.drl')
 dstPlot = os.path.join(output_directory,project_name + '.txt')
 shutil.move(srcPlot, dstPlot)
-print srcPlot + " => " + dstPlot
+print(srcPlot + " => " + dstPlot)
 fab_files.append(dstPlot)
 
 # One can create a text file to report drill statistics
@@ -157,8 +157,8 @@ abs_src = os.path.abspath(output_directory)
 for filename in  fab_files:
         absname = os.path.abspath(filename)
         arcname = absname[len(abs_src) + 1:]
-        print 'zipping %s as %s' % (filename,
-                                    arcname)
+        print('zipping %s as %s' % (filename,
+                                    arcname))
         zf.write(absname, arcname)
 zf.close()
 
