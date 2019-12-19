@@ -354,15 +354,18 @@ def render(plot_plan, output_filename):
 		'/usr/bin/'
 	]
 	os.environ["PATH"] += os.pathsep + os.pathsep.join(pathlist)
-	#os.environ['PATH'] = 
-	subprocess.check_call([
-		'inkscape',
-		'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
-		'--export-dpi={}'.format(dpi),
-		'--export-png', final_png,
-		'--export-background', colours['BackGround'][0],
-		final_svg,
-	])
+	try:
+		subprocess.check_call([
+			'inkscape',
+			'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+			'--export-dpi={}'.format(dpi),
+			'--export-png', final_png,
+			'--export-background', colours['BackGround'][0],
+			final_svg,
+		])
+	except Exception as e:
+		print "Inkscape is most likely not in your path"
+
 
 
 #Slight hack for etree. to remove 'ns0:' from output
