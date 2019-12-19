@@ -346,6 +346,15 @@ def render(plot_plan, output_filename):
 		x0 = -x0
 		x1 = -x1
 
+	# Hack your path to add a bunch of plausible locations for inkscape
+	pathlist = [
+		'C:\\Program Files\\Inkscape',
+		'C:\\Program Files (x86)\\Inkscape',
+		'/usr/local/bin',
+		'/usr/bin/'
+	]
+	os.environ["PATH"] += os.pathsep + os.pathsep.join(pathlist)
+	#os.environ['PATH'] = 
 	subprocess.check_call([
 		'inkscape',
 		'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
@@ -417,6 +426,7 @@ plot_plan = [
 	( F_SilkS, "" ,'Silk' ),
 	( Edge_Cuts, ""  ,'Edge' ),
 ]
+
 render(plot_plan, project_name + '-Front.png')
 
 
