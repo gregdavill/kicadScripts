@@ -364,7 +364,7 @@ def render(plot_plan, output_filename):
 			final_svg,
 		])
 	except Exception as e:
-		print "Inkscape is most likely not in your path"
+		print("Inkscape is most likely not in your path")
 
 
 
