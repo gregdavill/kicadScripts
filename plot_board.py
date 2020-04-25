@@ -346,14 +346,26 @@ def render(plot_plan, output_filename):
 		x0 = -x0
 		x1 = -x1
 
-	subprocess.check_call([
-		'inkscape',
-		'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
-		'--export-dpi={}'.format(dpi),
-		'--export-png', final_png,
-		'--export-background', colours['BackGround'][0],
-		final_svg,
-	])
+	version = subprocess.check_output(['inkscape', '--version'], stderr=subprocess.STDOUT).split()
+	if len(version) > 1 and version[1] < "1.0":
+		subprocess.check_call([
+			'inkscape',
+			'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+			'--export-dpi={}'.format(dpi),
+			'--export-png', final_png,
+			'--export-background', colours['BackGround'][0],
+			final_svg,
+		])
+	else:
+		subprocess.check_call([
+			'inkscape',
+			'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+			'--export-dpi={}'.format(dpi),
+			'--export-type=png',
+			'--export-filename={}'.format(final_png),
+			'--export-background', colours['BackGround'][0],
+			final_svg,
+		])
 
 
 #Slight hack for etree. to remove 'ns0:' from output
