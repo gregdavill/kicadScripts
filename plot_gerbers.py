@@ -57,7 +57,7 @@ popt.SetAutoScale(False)
 popt.SetScale(1)
 popt.SetMirror(False)
 popt.SetUseGerberAttributes(False)
-popt.SetExcludeEdgeLayer(True);
+popt.SetExcludeEdgeLayer(True)
 popt.SetScale(1)
 popt.SetUseAuxOrigin(True)
 popt.SetNegative(False)
@@ -127,8 +127,12 @@ drlwriter.SetMapFileFormat( PLOT_FORMAT_PDF )
 
 mirror = False
 minimalHeader = False
-#offset = wxPoint(0,0)
-offset = board.GetAuxOrigin()
+
+if popt.GetUseAuxOrigin():
+    offset = board.GetAuxOrigin()
+else:
+    offset = wxPoint(0,0)
+
 mergeNPTH = True
 drlwriter.SetOptions( mirror, minimalHeader, offset, mergeNPTH )
 
