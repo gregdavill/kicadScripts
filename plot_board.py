@@ -6,7 +6,6 @@
 
 import sys
 import os
-import pcbnew
 import time
 
 import re
@@ -16,9 +15,17 @@ import subprocess
 
 import xml.etree.ElementTree as ET
 
-from pcbnew import *
+
 from datetime import datetime
 from shutil import copy
+
+try:
+    import pcbnew
+    from pcbnew import *
+except:
+    print("PCBNew not found, are you using KiCAD included Python ?")
+    exit()
+    
 
 greenStandard = {
 	'Copper' : ['#E8D959',0.85],
