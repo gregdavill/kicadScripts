@@ -80,7 +80,7 @@ class svgObject(object):
 		# collecting all ids and doing search & replace
 		# Potentially dangerous (can break user text)
 		ids = []
-		for el in root.getiterator():
+		for el in root.iter():
 			if "id" in el.attrib and el.attrib["id"] != "origin":
 				ids.append(el.attrib["id"])
 		with open(filename) as f:
@@ -90,7 +90,7 @@ class svgObject(object):
 
 		root = ET.fromstring(content)
 		# Remove SVG namespace to ease our lifes and change ids
-		for el in root.getiterator():
+		for el in root.iter():
 			if "id" in el.attrib and el.attrib["id"] != "origin":
 				el.attrib["id"] = prefix + el.attrib["id"]
 			if '}' in str(el.tag):
