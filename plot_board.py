@@ -382,6 +382,7 @@ def render(plot_plan, output_filename):
 				'--export-type=png',
 				'--export-filename={}'.format(final_png),
 				'--export-background', colours['BackGround'][0],
+				'--export-background-opacity={}'.format(255),
 				final_svg,
 			])
 	except Exception as e:
