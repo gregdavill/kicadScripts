@@ -311,7 +311,6 @@ def render(plot_plan, output_filename):
 	canvas.createSVG()
 	for layer_info in plot_plan:
 
-		print(layer_info)
 		plot_layer(layer_info)
 		
 		svgData = svgObject()
