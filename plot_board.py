@@ -364,7 +364,7 @@ def render(plot_plan, output_filename):
 	try:	
 		version = subprocess.check_output(['inkscape', '--version'], stderr=None).split()
 		if len(version) > 1 and version[1].decode('utf-8').startswith("0."):
-			print(f"Detected Inkscape version < 1.0 ({version[1].decode('utf-8')})")
+			print("Detected Inkscape version < 1.0 ({})".format(version[1].decode('utf-8')))
 			subprocess.check_call([
 				'inkscape',
 				'--export-area={}:{}:{}:{}'.format(int(x0),int(y0),int(x1),int(y1)),
