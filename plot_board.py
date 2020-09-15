@@ -169,10 +169,10 @@ class svgObject(object):
 	
 	
 	def addholes(self, holeData):
-		holeData.attrib['mask'] =  "url(#boardMask);"
+		self.svg.append(holeData)
 		if bMirrorMode:
 			holeData.attrib['transform'] = "scale(-1,1)"
-		self.svg.append(holeData)
+		#holeData.attrib['mask'] =  "url(#boardMask);"
 
 	def addSvgImageInvert(self, svgImage, colour):
 		defs = self.svg.find('defs')
@@ -184,9 +184,7 @@ class svgObject(object):
 		if bMirrorMode:
 			newMask.attrib['transform'] = "scale(-1,1)"
 		
-		
-		imageGroup = svgImage.extractImageAsGroup()
-		newMask.append(imageGroup)
+
 
 		rect = ET.SubElement(newMask, 'rect',  
 		width="{}".format(ki2dmil(bb.GetWidth())),
@@ -195,6 +193,8 @@ class svgObject(object):
 		y="{}".format(ki2dmil(bb.GetY())),
 		style="fill:#FFFFFF; fill-opacity:1.0;")
 
+		imageGroup = svgImage.extractImageAsGroup()
+		newMask.append(imageGroup)
 
 		#create a rectangle to mask through
 		wrapper = ET.SubElement(self.svg, 'g',
@@ -215,7 +215,7 @@ class svgObject(object):
 		
 		#create a rectangle to mask through
 		wrapper = ET.SubElement(self.svg, 'g',
-		style="fill:{}; fill-opacity:1.0;".format(colour))
+		style="fill:{}; fill-opacity:0.8;".format(colour))
 		
 		imageGroup = svgImage.extractImageAsGroup()
 		wrapper.append(imageGroup)
@@ -239,7 +239,7 @@ class svgObject(object):
 
 def get_hole_mask(board):
 	mask = ET.Element( "g", id="hole-mask")
-	container = ET.SubElement(mask, "g", style="opacity:0.8;")
+	container = ET.SubElement(mask, "g", style="opacity:0.7;")
 
 	# Print all Drills
 	for mod in board.GetModules():
@@ -255,7 +255,7 @@ def get_hole_mask(board):
 
 			#length = 200
 			stroke = size
-			print(str(size) + " " +  str(length) + " " + str(pad.GetOrientation()))
+			# print(str(size) + " " +  str(length) + " " + str(pad.GetOrientation()))
 			
 			points = "{} {} {} {}".format(0, -length / 2, 0, length / 2)
 			if pad.GetDrillSize()[0] >= pad.GetDrillSize()[1]:
@@ -286,6 +286,7 @@ def get_hole_mask(board):
 		el = ET.SubElement(container, "polyline")
 		el.attrib["stroke-linecap"] = "round"
 		el.attrib["stroke"] = "black"
+		el.attrib["opacity"] = "1.0"
 		el.attrib["stroke-width"] = str(stroke)
 		el.attrib["points"] = points
 		el.attrib["transform"] = "translate({} {})".format(
@@ -361,33 +362,33 @@ def render(plot_plan, output_filename):
 		'/usr/bin/'
 	]
 	os.environ["PATH"] += os.pathsep + os.pathsep.join(pathlist)
-	#try:
-	print(os.environ["PATH"])
-
-	version = subprocess.check_output(['inkscape', '--version'], stderr=None).split()
-	if len(version) > 1 and version[1].decode("utf-8").startswith("0."):
-		print("Detected Inkscape version < 1.0")
-		subprocess.check_call([
-			'inkscape',
-			'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
-			'--export-dpi={}'.format(dpi),
-			'--export-png', final_png,
-			'--export-background', colours['BackGround'][0],
-			final_svg,
-		])
-	else:
-		print("Detected Inkscape version 1.0+")
-		subprocess.check_call([
-			'inkscape',
-			'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
-			'--export-dpi={}'.format(dpi),
-			'--export-type=png',
-			'--export-filename={}'.format(final_png),
-			'--export-background', colours['BackGround'][0],
-			final_svg,
-		])
-	#except Exception as e:
-#		print("Inkscape is most likely not in your path")
+	try:	
+		version = subprocess.check_output(['inkscape', '--version'], stderr=None).split()
+		if len(version) > 1 and version[1].decode('utf-8').startswith("0."):
+			print(f"Detected Inkscape version < 1.0 ({version[1].decode('utf-8')})")
+			subprocess.check_call([
+				'inkscape',
+				'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+				'--export-dpi={}'.format(dpi),
+				'--export-png', final_png,
+				'--export-background', colours['BackGround'][0],
+				final_svg,
+			])
+		else:
+			print("Detected Inkscape version 1.0+")
+			subprocess.check_call([
+				'inkscape',
+				'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+				'--export-dpi={}'.format(dpi),
+				'--export-type=png',
+				'--export-filename={}'.format(final_png),
+				'--export-background', colours['BackGround'][0],
+				final_svg,
+			])
+	except Exception as e:
+		print(e)
+		#print("Inkscape is most likely not in your path")
+		
 
 
 
