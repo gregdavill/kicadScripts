@@ -185,6 +185,8 @@ class svgObject(object):
 			newMask.attrib['transform'] = "scale(-1,1)"
 		
 
+		imageGroup = svgImage.extractImageAsGroup()
+		newMask.append(imageGroup)
 
 		rect = ET.SubElement(newMask, 'rect',  
 		width="{}".format(ki2dmil(bb.GetWidth())),
@@ -193,8 +195,6 @@ class svgObject(object):
 		y="{}".format(ki2dmil(bb.GetY())),
 		style="fill:#FFFFFF; fill-opacity:1.0;")
 
-		imageGroup = svgImage.extractImageAsGroup()
-		newMask.append(imageGroup)
 
 		#create a rectangle to mask through
 		wrapper = ET.SubElement(self.svg, 'g',
@@ -367,7 +367,7 @@ def render(plot_plan, output_filename):
 			print(f"Detected Inkscape version < 1.0 ({version[1].decode('utf-8')})")
 			subprocess.check_call([
 				'inkscape',
-				'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+				'--export-area={}:{}:{}:{}'.format(int(x0),int(y0),int(x1),int(y1)),
 				'--export-dpi={}'.format(dpi),
 				'--export-png', final_png,
 				'--export-background', colours['BackGround'][0],
@@ -377,7 +377,7 @@ def render(plot_plan, output_filename):
 			print("Detected Inkscape version 1.0+")
 			subprocess.check_call([
 				'inkscape',
-				'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+				'--export-area={}:{}:{}:{}'.format(int(x0),int(y0),int(x1),int(y1)),
 				'--export-dpi={}'.format(dpi),
 				'--export-type=png',
 				'--export-filename={}'.format(final_png),
