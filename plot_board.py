@@ -420,16 +420,26 @@ popt = pctl.GetPlotOptions()
 
 popt.SetOutputDirectory(temp_dir)
 
+
 # Set some important plot options:
 popt.SetPlotFrameRef(False)
-popt.SetLineWidth(FromMM(0.35))
+
+kicad_version = 5
+
+try:
+	popt.SetLineWidth(FromMM(0.35))
+except:
+	kicad_version = 6
 
 popt.SetAutoScale(False)
-popt.SetScale(1)
 popt.SetMirror(False)
 popt.SetUseGerberAttributes(False)
 popt.SetExcludeEdgeLayer(True);
+
 popt.SetScale(1)
+if kicad_version == 6:
+	popt.SetScale(1/2540)
+
 popt.SetUseAuxOrigin(False)
 popt.SetNegative(False)
 popt.SetPlotReference(True)
