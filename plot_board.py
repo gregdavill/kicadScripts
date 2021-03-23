@@ -418,7 +418,9 @@ def render(pcb, plot_plan, output_filename, mirror=False):
 	# Hack your path to add a bunch of plausible locations for inkscape
 	pathlist = [
 		'C:\\Program Files\\Inkscape',
+		'C:\\Program Files\\Inkscape\\bin',
 		'C:\\Program Files (x86)\\Inkscape',
+		'C:\\Program Files (x86)\\Inkscape\\bin',
 		'/usr/local/bin',
 		'/usr/bin/'
 	]
