@@ -20,12 +20,12 @@ from datetime import datetime
 from shutil import copy
 
 try:
-    import pcbnew
-    from pcbnew import *
+	import pcbnew
+	from pcbnew import *
 except:
-    print("PCBNew not found, are you using KiCAD included Python ?")
-    exit()
-    
+	print("PCBNew not found, are you using KiCAD included Python ?")
+	exit()
+	
 
 greenStandard = {
 	'Copper' : ['#E8D959',0.85],
@@ -73,6 +73,8 @@ def kiColour(val):
 class svgObject(object):
 	# Create a Blank SVG
 	def __init__(self, pcb, mirror=False):
+		# Layers need to be visible to compute the bounding box
+		pcb.SetVisibleAlls();
 		self.bb = pcb.GetBoundingBox()
 		self.mirror = mirror
 		self.et = ET.ElementTree(ET.fromstring("""<svg width="29.7002cm" height="21.0007cm" viewBox="0 0 116930 82680 ">
